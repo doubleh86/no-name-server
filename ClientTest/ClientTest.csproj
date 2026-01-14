@@ -9,7 +9,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\CommonData\CommonData.csproj" />
-      <ProjectReference Include="..\NetworkProtocols\NetworkProtocols.csproj" />
     </ItemGroup>
 
     <ItemGroup>

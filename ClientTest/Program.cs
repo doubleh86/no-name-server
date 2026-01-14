@@ -9,7 +9,7 @@ var command = Console.ReadLine();
 
 switch (command)
 {
-    case "2":
+    case "1":
     {
         ThreadPool.SetMinThreads(1000, 1000);
         await RunLoadTest(1);
