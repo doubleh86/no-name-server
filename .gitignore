@@ -1,0 +1,33 @@
+# 빌드 결과물 무시
+bin/
+obj/
+out/
+
+# 사용자 환경 파일 무시
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# 로그/업로드 폴더 파일 무시
+Logs/
+AdminWeb/TableData
+*.log
+
+# 특정 파일 무시
+ApiServerTest/ApiTest/EtcTest.cs
+
+# OS별 불필요 파일 무시
+.DS_Store
+Thumbs.db
+
+# 도커/컨테이너 환경 변수 파일
+.env
+
+# setting Files
+**/redisSettings.json
+**/sqlsettings.json
+#**/appsettings.json
+#**/appsettings.Development.json
