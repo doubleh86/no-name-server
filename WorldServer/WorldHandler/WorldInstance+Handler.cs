@@ -19,8 +19,6 @@ public partial class WorldInstance
     private ValueTask _HandleChangeWorld(byte[] data)
     {
         var changeWorldCommand = MemoryPackHelper.Deserialize<ChangeWorldCommand>(data);
-        if (changeWorldCommand == null)
-            return ValueTask.CompletedTask;
         
         _Push(new ActionJob<ChangeWorldCommand>(changeWorldCommand, _OnChangeWorldCommand));
         return ValueTask.CompletedTask;
