@@ -1,6 +1,6 @@
 using System.Numerics;
-using MySqlDataTableLoader.Models;
-using MySqlDataTableLoader.Utils.Helper;
+using DataTableLoader.Models;
+using DataTableLoader.Helper;
 using ServerFramework.CommonUtils.Helper;
 using WorldServer.GameObjects;
 using WorldServer.WorldHandler.Utils;
@@ -82,9 +82,8 @@ public class WorldMapInfo : IDisposable
     
     private void _InitializeMonsters()
     {
-        var monsterGroupList = MySqlDataTableHelper
-            .GetDataList<MonsterTGroup>()
-            .Where(x => x.world_id == _worldMapId);
+        var monsterGroupList = DataTableHelper.GetDataList<MonsterTGroup>()
+                                              .Where(x => x.world_id == _worldMapId);
 
         foreach (var monsterGroup in monsterGroupList)
         {
@@ -103,7 +102,7 @@ public class WorldMapInfo : IDisposable
             
             foreach (var monsterId in monsterGroup.MonsterList)
             {
-                var tableData = MySqlDataTableHelper.GetData<MonsterInfo>(monsterId);
+                var tableData = DataTableHelper.GetData<MonsterInfo>(monsterId);
                 if (tableData == null)
                     continue;
                 

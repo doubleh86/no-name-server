@@ -1,5 +1,5 @@
 using System.Numerics;
-using MySqlDataTableLoader.Models;
+using DataTableLoader.Models;
 using NetworkProtocols.Socket.WorldServerProtocols.Models;
 
 namespace WorldServer.GameObjects;

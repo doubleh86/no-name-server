@@ -1,17 +1,18 @@
 using System.Collections.Concurrent;
 using System.Reflection;
-using MySqlDataTableLoader.Models;
+using DataTableLoader.Models;
+using DataTableLoader.Utils;
 using ServerFramework.CommonUtils.Helper;
 using ServerFramework.SqlServerServices.Models;
 
-namespace MySqlDataTableLoader.Utils.Helper;
+namespace DataTableLoader.Helper;
 
-public static partial class MySqlDataTableHelper
+public class DataTableHelper
 {
     private static SqlServerDbInfo _settings;
     private static LoggerService _loggerService;
     private static readonly ConcurrentDictionary<string, object> _dataDictionary = new();
-    
+
     public static ICollection<string> GetTableNameList => _dataDictionary.Keys;
     
     public static void Initialize(SqlServerDbInfo settings, LoggerService logger)
@@ -59,7 +60,7 @@ public static partial class MySqlDataTableHelper
         if (classTypes == null || classTypes.Count < 1)
             return;
         
-        var method = typeof(MySqlDataTableHelper).GetMethods(BindingFlags.Static | BindingFlags.NonPublic)
+        var method = typeof(DataTableHelper).GetMethods(BindingFlags.Static | BindingFlags.NonPublic)
             .Where(x => x.Name == nameof(_InitializeData))
             .FirstOrDefault(x => x.GetParameters().Length == 1);
         if (method == null)
@@ -111,14 +112,15 @@ public static partial class MySqlDataTableHelper
         return dictionary?.ToValueList();
     }
 
-    public static T GetData<T>(string key) where T : BaseData
+    public static T GetData<T>(long key) where T : BaseData
     {
         var dictionary = _GetDataDictionary<T>();
         return dictionary?.GetDataValue(key);
     }
     
-    public static T GetData<T>(int key) where T : BaseData
+    public static T GetData<T>(int firstKey, int secondKey) where T : BaseData
     {
-        return GetData<T>(key.ToString());
+        var key = BaseData.GetCombineKey(firstKey, secondKey);
+        return GetData<T>(key);
     }
 }

@@ -3,6 +3,7 @@ using WorldServer.GameObjects;
 
 namespace WorldServer.WorldHandler.WorldDataModels;
 
+// Sector 
 public class MapCell : IDisposable
 {
     public int ZoneId { get; set; }

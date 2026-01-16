@@ -2,8 +2,8 @@ using System.Collections.Concurrent;
 using System.Numerics;
 using CommonData.CommonModels;
 using DbContext.GameDbContext;
-using MySqlDataTableLoader.Models;
-using MySqlDataTableLoader.Utils.Helper;
+using DataTableLoader.Models;
+using DataTableLoader.Helper;
 using NetworkProtocols.Socket.WorldServerProtocols;
 using NetworkProtocols.Socket.WorldServerProtocols.GameProtocols;
 using ServerFramework.CommonUtils.Helper;
@@ -117,7 +117,7 @@ public partial class WorldInstance : IDisposable
 
     private ValueTask _RoadCurrentWorldMapAsync(int worldId)
     {
-        var worldMapInfo = MySqlDataTableHelper.GetData<WorldInfo>(worldId);
+        var worldMapInfo = DataTableHelper.GetData<WorldInfo>(worldId);
         if (worldMapInfo == null)
             return ValueTask.CompletedTask;
 

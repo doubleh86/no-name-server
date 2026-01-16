@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
-using MySqlDataTableLoader.Models;
-using MySqlDataTableLoader.Utils.Helper;
+using DataTableLoader.Models;
+using DataTableLoader.Helper;
 using WorldServer.Utils;
 
 namespace WorldServer.WorldHandler.Utils;
@@ -18,11 +18,11 @@ public sealed class WorldDefinition
     public WorldDefinition(int worldId)
     {
         WorldId = worldId;
-        var world = MySqlDataTableHelper.GetData<WorldInfo>(worldId);
+        var world = DataTableHelper.GetData<WorldInfo>(worldId);
         if(world == null)
             throw new WorldServerException(WorldErrorCode.NotFoundZone, $"Not found world {worldId}");
         
-        var zones = MySqlDataTableHelper.GetDataList<MapInfo>()
+        var zones = DataTableHelper.GetDataList<MapInfo>()
                                         .Where(x => x.world_id == worldId)
                                         .Select(x => x.Clone() as MapInfo)
                                         .Where(x => x != null)
@@ -88,4 +88,14 @@ public static class WorldDefinitionCache
 {
     private static readonly ConcurrentDictionary<int, WorldDefinition> _cache = new();
     public static WorldDefinition Get(int worldId) => _cache.GetOrAdd(worldId, x => new WorldDefinition(x));
+
+    public static void LoadAll()
+    {
+        var allWorlds = DataTableHelper.GetDataList<WorldInfo>();
+        foreach (var world in allWorlds)
+        {
+            Get(world.world_id);
+        }
+        
+    }
 }

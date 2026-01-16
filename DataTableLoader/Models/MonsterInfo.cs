@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace MySqlDataTableLoader.Models;
+namespace DataTableLoader.Models;
 
 public class MonsterInfo : BaseData, IPrepareLoad, ICloneable
 {
@@ -13,7 +13,7 @@ public class MonsterInfo : BaseData, IPrepareLoad, ICloneable
     public int monster_hp { get; set;}
     
     [NotMapped] public List<int> monsterSkills { get; set; }
-    protected override int GetKey()
+    protected override long GetKey()
     {
         return monster_id;
     }

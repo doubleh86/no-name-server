@@ -1,4 +1,4 @@
-namespace MySqlDataTableLoader.Models;
+namespace DataTableLoader.Models;
 
 public interface IPrepareLoad
 {

@@ -1,7 +1,7 @@
 using System.Numerics;
 using CommonData.CommonModels.Enums;
 using CommonData.NetworkModels.WorldServerProtocols.GameProtocols;
-using MySqlDataTableLoader.Models;
+using DataTableLoader.Models;
 using NetworkProtocols.Socket.WorldServerProtocols.Models;
 
 namespace WorldServer.GameObjects;

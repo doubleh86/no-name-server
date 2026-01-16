@@ -17,8 +17,8 @@
     <ItemGroup>
       <ProjectReference Include="..\..\GSFramework\ServerFramework\ServerFramework.csproj" />
       <ProjectReference Include="..\CommonData\CommonData.csproj" />
+      <ProjectReference Include="..\DataTableLoader\DataTableLoader.csproj" />
       <ProjectReference Include="..\DbContext\DbContext.csproj" />
-      <ProjectReference Include="..\MySqlDataTableLoader\MySqlDataTableLoader.csproj" />
     </ItemGroup>
 
     <ItemGroup>

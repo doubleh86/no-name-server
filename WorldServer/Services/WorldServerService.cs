@@ -1,13 +1,14 @@
+using DataTableLoader.Helper;
+using DataTableLoader.Utils;
 using DbContext.GameDbContext;
 using Microsoft.Extensions.Options;
-using MySqlDataTableLoader.Utils;
-using MySqlDataTableLoader.Utils.Helper;
 using ServerFramework.CommonUtils.DateTimeHelper;
 using ServerFramework.CommonUtils.Helper;
 using ServerFramework.SqlServerServices.Models;
 using SuperSocket.Server;
 using SuperSocket.Server.Abstractions;
 using WorldServer.Network;
+using WorldServer.WorldHandler.Utils;
 
 namespace WorldServer.Services;
 
@@ -77,6 +78,9 @@ public class WorldServerService : SuperSocketService<NetworkPackage>
         
             _worldService.Initialize(this);
             _worldService.StartGlobalTicker();
+            
+            // WorldDefinition All Preload
+            WorldDefinitionCache.LoadAll();
         
             await base.OnStartedAsync();
         }
@@ -95,8 +99,8 @@ public class WorldServerService : SuperSocketService<NetworkPackage>
             return;
         }
         
-        MySqlDataTableHelper.Initialize(sqlInfo, _loggerService);
-        MySqlDataTableHelper.ReloadTableData();
+        DataTableHelper.Initialize(sqlInfo, _loggerService);
+        DataTableHelper.ReloadTableData();
     }
 
     protected override async ValueTask OnStopAsync()

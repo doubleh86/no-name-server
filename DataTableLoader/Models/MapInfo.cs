@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace MySqlDataTableLoader.Models;
+namespace DataTableLoader.Models;
 
 // size_x / chunk_size = max chunk x <= 이건 딱 떨어지게 설정
 // size_z / chunk_size = max chunk z <= 이것도 딱 떨어지게 설정 
@@ -22,7 +22,7 @@ public class MapInfo : BaseData, ICloneable, IPrepareLoad
     public int MaxChunkZ;
     public Vector3 WorldOffset;
     
-    protected override int GetKey()
+    protected override long GetKey()
     {
         return zone_id;
     }

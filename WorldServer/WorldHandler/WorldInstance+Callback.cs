@@ -1,7 +1,7 @@
 using System.Numerics;
 using CommonData.NetworkModels.WorldServerProtocols.GameProtocols;
-using MySqlDataTableLoader.Models;
-using MySqlDataTableLoader.Utils.Helper;
+using DataTableLoader.Models;
+using DataTableLoader.Helper;
 using NetworkProtocols.Socket;
 using NetworkProtocols.Socket.WorldServerProtocols.GameProtocols;
 using WorldServer.GameObjects;
@@ -93,7 +93,7 @@ public partial class WorldInstance
 
         try
         {
-            if(MySqlDataTableHelper.GetData<WorldInfo>(command.WorldId) == null)
+            if(DataTableHelper.GetData<WorldInfo>(command.WorldId) == null)
                 throw new WorldServerException(WorldErrorCode.WrongPacket, $"World not found {command.WorldId}");
                 
             _worldMapInfo.ClearWorld();

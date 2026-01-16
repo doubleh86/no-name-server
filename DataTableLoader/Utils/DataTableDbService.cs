@@ -1,11 +1,11 @@
 using System.Collections.Concurrent;
+using DataTableLoader.Models;
 using Microsoft.EntityFrameworkCore;
-using MySqlDataTableLoader.Models;
 using ServerFramework.CommonUtils.Helper;
 using ServerFramework.SqlServerServices;
 using ServerFramework.SqlServerServices.Models;
 
-namespace MySqlDataTableLoader.Utils;
+namespace DataTableLoader.Utils;
 
 public class DataTableDbService : SqlServerServiceBase
 {
@@ -16,6 +16,7 @@ public class DataTableDbService : SqlServerServiceBase
     private DbSet<MapInfo> map_info { get; set; }
     private DbSet<MonsterTGroup> monster_group { get; set; }
     private DbSet<MonsterInfo> monster_info { get; set; }
+    private DbSet<SkillInfo> skill_info { get; set; }
     
     public DataTableDbService(SqlServerDbInfo settings, LoggerService loggerService, bool isLazyLoading = false) : base(settings)
     {
@@ -31,6 +32,7 @@ public class DataTableDbService : SqlServerServiceBase
         _tableMapping.TryAdd(typeof(MapInfo), map_info);
         _tableMapping.TryAdd(typeof(MonsterTGroup), monster_group);
         _tableMapping.TryAdd(typeof(MonsterInfo), monster_info);
+        _tableMapping.TryAdd(typeof(SkillInfo), skill_info);
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -39,6 +41,7 @@ public class DataTableDbService : SqlServerServiceBase
         modelBuilder.Entity<MapInfo>(entity => entity.HasKey(data => new {data.zone_id, data.world_id}));
         modelBuilder.Entity<MonsterTGroup>(entity => entity.HasKey(data => data.monster_group_id));
         modelBuilder.Entity<MonsterInfo>(entity => entity.HasKey(data => data.monster_id));
+        modelBuilder.Entity<SkillInfo>(entity => entity.HasKey(data => data.skill_id));
     }
     
     public List<T> LoadData<T>() where T : BaseData

@@ -1,15 +1,15 @@
 using System.Text.Json;
-using MySqlDataTableLoader.Models;
+using DataTableLoader.Models;
 
-namespace MySqlDataTableLoader.Utils;
+namespace DataTableLoader.Utils;
 
 
 public class DataDictionary<TData> where TData : BaseData
 {
-    private Dictionary<string, TData> _dictionary = new();
-    public Dictionary<string, TData> Dictionary => _dictionary;
+    private Dictionary<long, TData> _dictionary = new();
+    public Dictionary<long, TData> Dictionary => _dictionary;
 
-    public TData GetDataValue(string key)
+    public TData GetDataValue(long key)
     {
         return _dictionary.GetValueOrDefault(key, null);
     }
@@ -32,7 +32,7 @@ public class DataDictionary<TData> where TData : BaseData
             }
         }
         
-        _dictionary = dataList.ToDictionary(x => x.GetKeyString());
+        _dictionary = dataList.ToDictionary(x => x.GetKeyLong());
         return true;
     }
 
@@ -46,7 +46,7 @@ public class DataDictionary<TData> where TData : BaseData
             return false;
         }
             
-        _dictionary = JsonSerializer.Deserialize<Dictionary<string, TData>>(jsonString);
+        _dictionary = JsonSerializer.Deserialize<Dictionary<long, TData>>(jsonString);
         return true;
     }
 
