@@ -1,4 +1,5 @@
 using WorldServer.JobModels;
+using WorldServer.ResourcePool;
 
 namespace WorldServer.WorldHandler;
 
@@ -46,8 +47,9 @@ public partial class WorldInstance
         var nearByCells = _worldMapInfo.GetWorldNearByCells(_worldOwner.GetZoneId(), 
                                                             _worldOwner.GetPosition(), 
                                                             range: 2);
-        
-        _Push(new MonsterUpdateJob(_worldOwner.GetPosition(), nearByCells, _OnMonsterUpdate, _loggerService));
+
+        var job = MonsterUpdateJobPool.Rent(_worldOwner.GetPosition(), nearByCells, _OnMonsterUpdate);
+        _Push(job);
     }
 
 }

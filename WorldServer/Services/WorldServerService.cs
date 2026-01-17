@@ -8,6 +8,7 @@ using ServerFramework.SqlServerServices.Models;
 using SuperSocket.Server;
 using SuperSocket.Server.Abstractions;
 using WorldServer.Network;
+using WorldServer.ResourcePool;
 using WorldServer.WorldHandler.Utils;
 
 namespace WorldServer.Services;
@@ -76,6 +77,7 @@ public class WorldServerService : SuperSocketService<NetworkPackage>
         
             ThreadPool.SetMinThreads(Math.Max(minWorker, Environment.ProcessorCount * 2), minIOThread);
         
+            MonsterUpdateJobPool.Initialize(300, _loggerService);
             _worldService.Initialize(this);
             _worldService.StartGlobalTicker();
             

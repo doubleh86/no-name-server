@@ -30,8 +30,6 @@ public partial class WorldInstance
             return ValueTask.CompletedTask;
         
         var moveCommand = MemoryPackHelper.Deserialize<MoveCommand>(commandData);
-        if(moveCommand == null)
-            return ValueTask.CompletedTask;
         
         _Push(new ActionJob<MoveCommand>(moveCommand, _OnMoveCommand));
         return ValueTask.CompletedTask;
@@ -41,9 +39,6 @@ public partial class WorldInstance
     private ValueTask _HandleItemUse(byte[] data)
     {
         var useItemCommand = MemoryPackHelper.Deserialize<UseItemCommand>(data);
-        if (useItemCommand == null)
-            return ValueTask.CompletedTask;
-
         
         _Push(new ActionJob<UseItemCommand>(useItemCommand, async (command) =>
         {

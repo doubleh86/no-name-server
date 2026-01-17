@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Numerics;
 
@@ -6,6 +7,8 @@ namespace DataTableLoader.Models;
 public class MonsterTGroup : BaseData, IPrepareLoad, ICloneable
 {
     public int monster_group_id { get; set; }
+    
+    [MaxLength(255)]
     public string monster_id_list { get; set; }
     public int world_id { get; set; }
     // public int zone_id { get; set; }

@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
+using MySqlX.XDevAPI;
 using SuperSocket.Connection;
 using WorldServer.Network;
+using SessionState = SuperSocket.Server.Abstractions.SessionState;
 
 namespace WorldServer.Services;
 
@@ -8,6 +10,12 @@ public class UserService : IDisposable
 {
     private readonly ConcurrentDictionary<long, UserSessionInfo> _sessions = new();
 
+    public static bool IsSessionAlive(UserSessionInfo session)
+    {
+        return session != null &&
+               session.State != SessionState.None &&
+               session.State != SessionState.Closed;
+    }
     public void AddUser(UserSessionInfo info)
     {
         _sessions.TryAdd(info.Identifier, info);

@@ -166,12 +166,8 @@ public partial class WorldInstance : IDisposable
 
         if (_worldOwner == null)
             return false;
-        
-        var session = _worldOwner.GetSessionInfo();
-        if(session == null)
-            return false;
 
-        if (session.State == SessionState.Closed || session.State == SessionState.None)
+        if (UserService.IsSessionAlive(_worldOwner.GetSessionInfo()) == false)
             return false;
         
         return true;

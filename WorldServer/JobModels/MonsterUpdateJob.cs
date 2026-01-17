@@ -3,61 +3,49 @@ using System.Numerics;
 using ServerFramework.CommonUtils.DateTimeHelper;
 using ServerFramework.CommonUtils.Helper;
 using WorldServer.GameObjects;
+using WorldServer.ResourcePool;
 using WorldServer.WorldHandler.WorldDataModels;
 
 namespace WorldServer.JobModels;
 
 
-public class MonsterUpdateJob : Job
+public class MonsterUpdateJob(LoggerService loggerService) : Job(loggerService)
 {
     private const int ParallelThreshold = 100; // ai가 복잡해지면 낮춘다
-    private readonly Func<List<MonsterObject>, ValueTask> _action;
-    private readonly List<MapCell> _nearByCells;
     
-    private readonly Vector3 _playerPosition;
+    private Func<List<MonsterObject>, ValueTask> _action;
+    private List<MapCell> _nearByCells;
+    private Vector3 _playerPosition;
+    
+    private readonly HashSet<long> _seen = new(capacity: 256);
+    private readonly List<MonsterObject> _targetMonsters = new(capacity: 256);
+    
 
-    public MonsterUpdateJob(Vector3 playerPosition, List<MapCell> nearByCells, 
-        Func<List<MonsterObject>, ValueTask> action, 
-        LoggerService loggerService) : base(loggerService)
+    public void Initialize(Vector3 playerPosition, List<MapCell> nearByCells,
+        Func<List<MonsterObject>, ValueTask> action)
     {
         _nearByCells = nearByCells;
         _action = action;
         _playerPosition = playerPosition;
     }
-    
-    public override async ValueTask ExecuteAsync()
+
+    public void Reset()
     {
-        var utcNow = TimeZoneHelper.UtcNow;
+        _nearByCells = null;
+        _action = null;
+    }
 
-        var seen = new HashSet<long>(capacity: _nearByCells.Count * 64);
-        var targetMonsters = new List<MonsterObject>(capacity: _nearByCells.Count * 64);
-        
-        foreach (var cell in _nearByCells)
-        {
-            foreach (var (_, obj) in cell.GetMapObjects())
-            {
-                if (obj is not MonsterObject monster)
-                    continue;
-
-                if (seen.Add(monster.GetId()) == false)
-                    continue;
-                
-                targetMonsters.Add(monster);
-            }
-        }
-
-        if (targetMonsters.Count < 1)
-            return;
-        
+    private void _UpdateMonsterAI(DateTime utcNow)
+    {
         try
         {
-            if (targetMonsters.Count >= ParallelThreshold)
+            if (_targetMonsters.Count >= ParallelThreshold)
             {
                 var errors = new ConcurrentQueue<Exception>();
                 var parallelismCount = Math.Max(1, Environment.ProcessorCount - 1);
                 var options = new ParallelOptions { MaxDegreeOfParallelism = parallelismCount };
                 
-                Parallel.ForEach(targetMonsters, options, monster =>
+                Parallel.ForEach(_targetMonsters, options, monster =>
                 {
                     try
                     {
@@ -76,7 +64,7 @@ public class MonsterUpdateJob : Job
             }
             else
             {
-                foreach (var monster in targetMonsters)
+                foreach (var monster in _targetMonsters)
                 {
                     monster.UpdateAI(utcNow, _playerPosition);
                 }    
@@ -86,7 +74,44 @@ public class MonsterUpdateJob : Job
         {
             _loggerService.Warning("Error in MonsterUpdateJob", e);
         }
+
+    }
+
+    private void _CollectTargetMonsters()
+    {
+        foreach (var cell in _nearByCells)
+        {
+            foreach (var (_, obj) in cell.GetMapObjects())
+            {
+                if (obj is not MonsterObject monster)
+                    continue;
+
+                if (_seen.Add(monster.GetId()) == false)
+                    continue;
+                
+                _targetMonsters.Add(monster);
+            }
+        }
+    }
+    public override async ValueTask ExecuteAsync()
+    {
+        try
+        {
+            _seen.Clear();
+            _targetMonsters.Clear();
+            
+            var utcNow = TimeZoneHelper.UtcNow;
+            
+            _CollectTargetMonsters();
+            if (_targetMonsters.Count < 1)
+                return;
         
-        await _action(targetMonsters);
+            _UpdateMonsterAI(utcNow);    
+            await _action(_targetMonsters);
+        }
+        finally
+        {
+            MonsterUpdateJobPool.Return(this);
+        }
     }
 }

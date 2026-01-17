@@ -124,7 +124,10 @@ public class WorldService : IDisposable
 
                 if (removeList.Count > 0)
                 {
-                    _RemoveDeadWorlds(shardIndex, myShardList, removeList);
+                    lock (_shardLocks[shardIndex])
+                    {
+                        _RemoveDeadWorldsInternal(myShardList, removeList);
+                    }
                     removeList.Clear();
                 }
                 
@@ -141,19 +144,18 @@ public class WorldService : IDisposable
         }
     }
 
-    private void _RemoveDeadWorlds(int shardIndex, List<WorldInstance> myShardList, List<WorldInstance> removeList)
+    // 여기서는 lock을 걸지 않는다. 
+    // _shardLocks[...] 걸면 재진입 락이 걸림.
+    private void _RemoveDeadWorldsInternal(List<WorldInstance> myShardList, List<WorldInstance> removeList)
     {
-        lock (_shardLocks[shardIndex])
+        foreach (var worldInstance in removeList)
         {
-            foreach (var worldInstance in removeList)
-            {
-                myShardList.Remove(worldInstance);
-                _worldInstances.TryRemove(worldInstance.GetRoomId(), out _);
-                _roomShardMap.TryRemove(worldInstance.GetRoomId(), out _);
-                        
-                worldInstance.Dispose();
-            }    
-        }
+            myShardList.Remove(worldInstance);
+            _worldInstances.TryRemove(worldInstance.GetRoomId(), out _);
+            _roomShardMap.TryRemove(worldInstance.GetRoomId(), out _);
+                    
+            worldInstance.Dispose();
+        }    
     }
 
     public void Dispose()
