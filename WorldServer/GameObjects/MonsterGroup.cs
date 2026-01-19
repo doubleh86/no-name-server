@@ -19,6 +19,7 @@ public class MonsterGroup
     public PlayerObject TargetPlayer { get; set; }
     
     public int MonsterCount => _monsters.Count;
+    public List<MonsterObject> Monsters => _monsters;
 
     public MonsterGroup(MonsterTGroup monsterTGroup, int zoneId)
     {

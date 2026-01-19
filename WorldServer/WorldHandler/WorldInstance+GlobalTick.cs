@@ -1,3 +1,4 @@
+using NetworkProtocols.Socket.WorldServerProtocols.Models;
 using WorldServer.JobModels;
 using WorldServer.ResourcePool;
 
@@ -12,6 +13,8 @@ public partial class WorldInstance
     private long _lastCallMonsterUpdateTick = Environment.TickCount64;
     private int _autoSaving;
     
+    private long _lastPrintMonsterLogger = Environment.TickCount64;
+    
     public void Tick()
     {
         if(IsAliveWorld() == false) 
@@ -20,6 +23,26 @@ public partial class WorldInstance
         var currentTick = Environment.TickCount64;
         _MonsterUpdateTick(currentTick);
         _AutoSaveTick(currentTick);
+        _MonsterLogger(currentTick);
+    }
+
+
+    private void _MonsterLogger(long currentTick)
+    {
+        if (currentTick - _lastPrintMonsterLogger < 1000 * 5)
+        {
+            return;
+        }
+
+        var monsterGroup = _worldMapInfo.GetMonsterGroups();
+        foreach (var group in monsterGroup)
+        {
+            foreach (var monster in group.Monsters)
+            {
+                var toPacket = monster.ToPacket();
+                _loggerService.Information($"Monster {monster.GetEnteredCell().X}, {monster.GetEnteredCell().Z}|{toPacket.Id} | {(AIState)toPacket.State} | {toPacket.Position}");
+            }
+        }
     }
 
     private void _AutoSaveTick(long currentTick)

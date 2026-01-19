@@ -37,40 +37,49 @@ public class MonsterObject : GameObject
 
     private void _UpdateState(Vector3 playerPosition)
     {
+        var currentPosition = GetPosition();
+
         if (_state == AIState.Return)
         {
-            var anchorDistance = Vector3.Distance(_group.AnchorPosition, GetPosition());
+            var anchorDistance = Vector3.Distance(_group.AnchorPosition, currentPosition);
             if (anchorDistance < 1.0f)
-            {
                 _UpdateStateChange(AIState.Idle);
-            }
 
             return;
         }
-        
-        if (_state == AIState.Chase)
+
+        // 앵커에서 너무 멀면 복귀
+        var anchorDist = Vector3.Distance(_group.AnchorPosition, currentPosition);
+        if (anchorDist > 45f)
         {
-            var anchorDistance = Vector3.Distance(_group.AnchorPosition, GetPosition());
-            if (anchorDistance > 40.0f)
+            _UpdateStateChange(AIState.Return);
+            return;
+        }
+
+        var distance = Vector3.Distance(playerPosition, currentPosition);
+
+        // 공격 중 멀어지면 쫓아가기
+        if (_state == AIState.Attack)
+        {
+            if (distance > 3f)   // 공격 범위 벗어남
             {
-                _UpdateStateChange(AIState.Return);
+                _UpdateStateChange(AIState.Chase);
                 return;
             }
         }
-        
-        var distance = Vector3.Distance(playerPosition, GetPosition());
-        if (distance < 3.0f)
+
+        if (distance < 3f)
         {
             _UpdateStateChange(AIState.Attack);
             return;
         }
 
-        if (distance < 15.0f)
+        if (distance < 25f)
         {
             _UpdateStateChange(AIState.Chase);
             return;
         }
-        
+
         _UpdateStateChange(AIState.Idle);
     }
 
@@ -84,6 +93,7 @@ public class MonsterObject : GameObject
         var newPos = GetPosition() + direction * 0.5f;
         
         float newRotation = MathF.Atan2(direction.Z, direction.X);
+        Console.WriteLine($"Move: {newPos} {newRotation}");
         _UpdateChangePositionAndRotation(newPos, newRotation);
     }
 
@@ -122,6 +132,7 @@ public class MonsterObject : GameObject
         _packet.ZoneId = GetZoneId();
         _packet.State = (int)_state;
         _packet.Rotation = GetRotation();
+        _packet.Type = GameObjectType.Monster;
 
         return _packet;
     }

@@ -22,6 +22,7 @@ public class WorldMapInfo : MapInfoBase
     private readonly List<MonsterGroup> _monsterGroups = new();
     
     public int GetWorldMapId() => _worldMapId;
+    public List<MonsterGroup> GetMonsterGroups() => _monsterGroups;
     public WorldMapInfo(long accountId, LoggerService loggerService) : base(loggerService)
     {
         _accountId = accountId;
@@ -69,6 +70,8 @@ public class WorldMapInfo : MapInfoBase
                 var spawnedMonster = new MonsterObject(IdGenerator.NextId(_accountId), position, zoneId, registerMonsterGroup, tableData);
                 cell.Enter(spawnedMonster);
                 registerMonsterGroup.AddMember(spawnedMonster);
+                
+                Console.WriteLine($"Spawned Monster {monsterId}|{cell.ZoneId}|{position.X},{position.Y},{position.Z}");
             }
             
             if(registerMonsterGroup.MonsterCount < 1)

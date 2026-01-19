@@ -1,6 +1,7 @@
 using System.Numerics;
 using CommonData.CommonModels.Enums;
 using CommonData.NetworkModels.WorldServerProtocols.GameProtocols;
+using WorldServer.WorldHandler.WorldDataModels;
 
 namespace WorldServer.GameObjects;
 
@@ -14,6 +15,8 @@ public abstract class GameObject
     private Vector3 _changePosition = Vector3.Zero;
     private float _changeRotation = 0f;
     protected int _zoneId;
+
+    private MapCell _enteredCell;
     
     protected bool _isChanged = false;
     public bool IsChanged() => _isChanged;
@@ -36,20 +39,31 @@ public abstract class GameObject
 
     public virtual void UpdatePosition(Vector3 position, float rotation, int zoneId)
     {
-        _position = position;
-        _rotation = rotation;
+        if(position != Vector3.Zero)
+            _position = position;
+        
+        if(rotation != 0f)
+            _rotation = rotation;
+        
         _zoneId = zoneId;
         
-        _UpdateChangePositionAndRotation(Vector3.Zero, 0f);
+        _changePosition = Vector3.Zero;
+        _changeRotation = 0f;
     }
 
     protected virtual void _UpdateChangePositionAndRotation(Vector3 changePosition, float rotation)
     {
         _changePosition = changePosition;
         _changeRotation = rotation;
-        
+       
         _isChanged = true;
+        
+        Console.WriteLine($"Update Position {_id} {_position} | {changePosition}");
+        
     }
+    
+    public void SetEnteredCell(MapCell cell) => _enteredCell = cell;
+    public MapCell GetEnteredCell() => _enteredCell;
     
     public void ResetChanged() => _isChanged = false;
 }

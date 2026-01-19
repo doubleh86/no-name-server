@@ -10,7 +10,7 @@ namespace WorldServer.ResourcePool;
 public static class MonsterUpdateJobPool
 {
     private static LoggerService _loggerService;
-    private static readonly ConcurrentStack<MonsterUpdateJob> _jobPool = new ConcurrentStack<MonsterUpdateJob>();
+    private static readonly ConcurrentStack<MonsterUpdateJob> _jobPool = new();
 
     public static void Initialize(int initialCapacity, LoggerService loggerService)
     {

@@ -80,6 +80,7 @@ public partial class WorldInstance
         {
             var packet = new UpdateGameObjects {IsSpawn = isSpawn, GameObjects = batch};
             var remainData = MemoryPackHelper.Serialize<UpdateGameObjects>(packet);
+            
             await _SendGameCommandPacket(GameCommandId.SpawnGameObject, remainData);
         }
 
@@ -135,25 +136,33 @@ public partial class WorldInstance
         
         foreach (var monster in dirtyMonsters)
         {
-            var cell = _worldMapInfo.GetCell(monster.GetPosition(), monster.GetZoneId());
-            var changeCell = _worldMapInfo.GetCell(monster.GetChangePosition());
-            if (changeCell == null)
+            if (monster.GetChangePosition() != Vector3.Zero)
             {
+                var cell = _worldMapInfo.GetCell(monster.GetPosition(), monster.GetZoneId());
+                var changeCell = _worldMapInfo.GetCell(monster.GetChangePosition());
+
+                if (changeCell == null)
+                {
+                    monster.ResetChanged();
+                    continue;
+                }
+
+                monster.UpdatePosition(monster.GetChangePosition(), monster.GetChangeRotation(), changeCell.ZoneId);
                 monster.ResetChanged();
-                continue;
+
+                updateMonsterGroups.Add(monster.GetGroup());
+
+                if (cell == changeCell)
+                    continue;
+
+                changeCell.Enter(monster);
+                cell.Leave(monster.GetId());
             }
-                
-            monster.UpdatePosition(monster.GetChangePosition(), monster.GetChangeRotation(), changeCell.ZoneId);
-            monster.ResetChanged();
-            
-            updateMonsterGroups.Add(monster.GetGroup());
-            
-            if (cell == changeCell) 
-                continue;
-            
-            changeCell.Enter(monster);
-            cell.Leave(monster.GetId());
-            
+            else
+            {
+                // 상태만 변경되는 경우가 있다.
+                monster.ResetChanged();
+            }
         }
 
         foreach (var monsterGroup in updateMonsterGroups)

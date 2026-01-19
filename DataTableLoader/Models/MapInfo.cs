@@ -46,8 +46,21 @@ public class MapInfo : BaseData, ICloneable, IPrepareLoad
 
     public void PrepareLoad()
     {
-        MaxChunkX = (int)Math.Ceiling(size_x / (double)chunk_size);
-        MaxChunkZ = (int)Math.Ceiling(size_z / (double)chunk_size);
+        if (chunk_size <= 0)
+            throw new Exception($"Invalid chunk_size: {chunk_size}");
+
+        if (size_x <= 0 || size_z <= 0)
+            throw new Exception($"Invalid map size: {size_x}, {size_z}");
+
+        if (size_x % chunk_size != 0)
+            throw new Exception($"size_x({size_x}) must be divisible by chunk_size({chunk_size})");
+
+        if (size_z % chunk_size != 0)
+            throw new Exception($"size_z({size_z}) must be divisible by chunk_size({chunk_size})");
+
+        MaxChunkX = size_x / chunk_size;   // 예: 2000/25 = 80
+        MaxChunkZ = size_z / chunk_size;   // 예: 2000/25 = 80
+
         WorldOffset = new Vector3(world_offset_x, 0, world_offset_z);
     }
 }

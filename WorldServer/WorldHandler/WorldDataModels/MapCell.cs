@@ -35,6 +35,7 @@ public class MapCell : IDisposable
         if(obj is PlayerObject player)
             _players.TryAdd(player.GetId(), player);
         
+        obj.SetEnteredCell(this);
     }
 
     public void Leave(long objId)
