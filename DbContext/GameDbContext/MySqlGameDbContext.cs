@@ -28,6 +28,8 @@ public class MySqlGameDbContext(SqlServerDbInfo dbInfo) : MySqlDapperServiceBase
     public async Task<PlayerInfoResult> GetPlayerInfoAsync(long accountId)
     {
         await using var connection = _GetConnection();
+        await connection.OpenAsync();
+
         var command = new GetPlayerInfoCommandAsync(this);
 
         return await command.ExecuteQueryAsync(new GetPlayerInfoCommandAsync.InParameters()
@@ -39,6 +41,8 @@ public class MySqlGameDbContext(SqlServerDbInfo dbInfo) : MySqlDapperServiceBase
     public async Task<int> ItemUseAsync(long accountId, int itemId, int itemCount)
     {
         await using var connection = _GetConnection();
+        await connection.OpenAsync();
+
         var command = new ItemUseCommandAsync(this);
 
         return await command.ExecuteQueryAsync(new ItemUseCommandAsync.InParameters()
