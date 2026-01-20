@@ -136,7 +136,7 @@ public partial class WorldInstance
         
         foreach (var monster in dirtyMonsters)
         {
-            if (monster.GetChangePosition() != Vector3.Zero)
+            if (monster.GetChangePosition() != monster.GetPosition())
             {
                 var cell = _worldMapInfo.GetCell(monster.GetPosition(), monster.GetZoneId());
                 var changeCell = _worldMapInfo.GetCell(monster.GetChangePosition());

@@ -12,6 +12,9 @@ public class MonsterInfo : BaseData, IPrepareLoad, ICloneable
     public int monster_type { get; set; }
     public int monster_hp { get; set;}
     
+    public float monster_speed { get; set; }
+    public float max_anchor_distance { get; set; }
+    
     [NotMapped] public List<int> monsterSkills { get; set; }
     protected override long GetKey()
     {

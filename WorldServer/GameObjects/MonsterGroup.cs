@@ -6,14 +6,13 @@ namespace WorldServer.GameObjects;
 
 public class MonsterGroup
 {
-    public long Id { get; set; }
+    private long _id { get; set; }
     private MonsterTGroup _monsterTGroup { get; set; }
-    public float RoamRadius { get; set; }
     
     private readonly List<MonsterObject> _monsters = new();
     
     public Vector3 AnchorPosition => _monsterTGroup.AnchorPosition;
-    public readonly int ZoneId;
+    private int _zoneId;
     
     public bool IsAnyMemberInCombat { get; set; }
     public PlayerObject TargetPlayer { get; set; }
@@ -21,11 +20,18 @@ public class MonsterGroup
     public int MonsterCount => _monsters.Count;
     public List<MonsterObject> Monsters => _monsters;
 
-    public MonsterGroup(MonsterTGroup monsterTGroup, int zoneId)
+    public MonsterGroup(MonsterTGroup monsterTGroup, long id)
     {
-        _monsterTGroup = monsterTGroup;
-        ZoneId = zoneId;
+        _id = id;
+        _monsterTGroup = monsterTGroup.Clone() as MonsterTGroup;
     }
+
+    public void SetZoneId(int zoneId)
+    {
+        _zoneId = zoneId;
+    }
+    
+    public float GetRoamRadius() => _monsterTGroup.roam_radius;
 
     public void AddMember(MonsterObject spawnedMonster)
     {

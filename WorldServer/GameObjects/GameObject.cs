@@ -12,8 +12,6 @@ public abstract class GameObject
     protected Vector3 _position;
     protected float _rotation;
     
-    private Vector3 _changePosition = Vector3.Zero;
-    private float _changeRotation = 0f;
     protected int _zoneId;
 
     private MapCell _enteredCell;
@@ -23,11 +21,9 @@ public abstract class GameObject
 
     public long GetId() => _id;
     public Vector3 GetPosition() => _position;
-    public Vector3 GetChangePosition() => _changePosition;
     
     public int GetZoneId() => _zoneId;
     public float GetRotation() => _rotation;
-    public float GetChangeRotation() => _changeRotation;
     public abstract GameObjectBase ToPacket();
     protected GameObject(long id, int zoneId, Vector3 position, GameObjectType objectType)
     {
@@ -39,29 +35,16 @@ public abstract class GameObject
 
     public virtual void UpdatePosition(Vector3 position, float rotation, int zoneId)
     {
-        if(position != Vector3.Zero)
+        if(position.Equals(_position) == false)
             _position = position;
         
-        if(rotation != 0f)
+        if(Math.Abs(rotation - _rotation) > 0)
             _rotation = rotation;
         
         _zoneId = zoneId;
         
-        _changePosition = Vector3.Zero;
-        _changeRotation = 0f;
     }
 
-    protected virtual void _UpdateChangePositionAndRotation(Vector3 changePosition, float rotation)
-    {
-        _changePosition = changePosition;
-        _changeRotation = rotation;
-       
-        _isChanged = true;
-        
-        Console.WriteLine($"Update Position {_id} {_position} | {changePosition}");
-        
-    }
-    
     public void SetEnteredCell(MapCell cell) => _enteredCell = cell;
     public MapCell GetEnteredCell() => _enteredCell;
     

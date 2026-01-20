@@ -15,7 +15,8 @@ public class MonsterTGroup : BaseData, IPrepareLoad, ICloneable
     public int position_x { get; set; }
     public int position_z { get; set; }
     public int position_y { get; set; }
-    
+    public float roam_radius { get; set; }
+
     [NotMapped] public List<long> MonsterList;
     [NotMapped] public Vector3 AnchorPosition;  
     

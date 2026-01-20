@@ -34,6 +34,7 @@ public partial class WorldInstance
             return;
         }
 
+        _lastPrintMonsterLogger = currentTick;
         var monsterGroup = _worldMapInfo.GetMonsterGroups();
         foreach (var group in monsterGroup)
         {
