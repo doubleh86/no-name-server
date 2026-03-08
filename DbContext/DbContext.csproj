@@ -15,4 +15,8 @@
       <ProjectReference Include="..\CommonData\CommonData.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Sql\" />
+    </ItemGroup>
+
 </Project>
