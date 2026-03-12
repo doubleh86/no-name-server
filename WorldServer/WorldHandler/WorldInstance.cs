@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Numerics;
 using CommonData.CommonModels;
 using DbContext.GameDbContext;
@@ -23,14 +22,9 @@ public partial class WorldInstance : IDisposable
 {
     private readonly IGameDbContext _dbContext; // Read 용 dbContext 
     private readonly string _roomId;
-    private readonly ConcurrentQueue<Job> _jobQueue = new();
     private bool _isDisposed;
     private int _exitOnce;
-    
-    // Worker Task
-    private readonly CancellationTokenSource _jobCts = new();
-    private readonly SemaphoreSlim _jobSignal = new(0, int.MaxValue);
-    private Task? _jobWorkerTask;
+    private Action<Job> _enqueueJob;
     
     private readonly LoggerService _loggerService;
     private readonly GlobalDbService _globalDbService;
@@ -51,51 +45,29 @@ public partial class WorldInstance : IDisposable
 
         _dbContext = GameDbContextWrapper.Create();
         _RegisterGameHandler();
-        _StartJobWorker();
     }
 
-    private void _StartJobWorker()
+    public void BindShardDispatcher(Action<Job> enqueueJob)
     {
-        if (_jobWorkerTask != null)
+        _enqueueJob = enqueueJob;
+    }
+
+    public async ValueTask ExecuteJobAsync(Job job)
+    {
+        if (_isDisposed)
             return;
 
-        _jobWorkerTask = Task.Run(async () =>
-        {
-            await _ProcessJob(_jobCts.Token);
-        });
-    }
-
-    private async ValueTask _ProcessJob(CancellationToken token)
-    {
         try
         {
-            while (token.IsCancellationRequested == false)
-            {
-                await _jobSignal.WaitAsync(token);
-                while (token.IsCancellationRequested == false && _jobQueue.TryDequeue(out var job) == true)
-                {
-                    try
-                    {
-                        await job.ExecuteAsync();
-                    }
-                    catch (WorldServerException e)
-                    {
-                        _loggerService.Warning($"In Game Error [{e.Message}]", e);
-                    }
-                    catch (Exception e)
-                    {
-                        _loggerService.Error($"Job failed [{e.Message}]", e);
-                    }
-                }
-            }
+            await job.ExecuteAsync();
         }
-        catch (OperationCanceledException)
+        catch (WorldServerException e)
         {
-            _loggerService.Information("World instance maybe disposed");
+            _loggerService.Warning($"In Game Error [{e.Message}]", e);
         }
         catch (Exception e)
         {
-            _loggerService.Error("World instance job worker error", e);
+            _loggerService.Error($"Job failed [{e.Message}]", e);
         }
     }
     
@@ -151,9 +123,14 @@ public partial class WorldInstance : IDisposable
     {
         if (_isDisposed == true)
             return;
-        
-        _jobQueue.Enqueue(action);
-        _jobSignal.Release();
+
+        if (_enqueueJob == null)
+        {
+            _loggerService.Warning($"Shard dispatcher not bound: roomId={_roomId}");
+            return;
+        }
+
+        _enqueueJob(action);
     }
     
     public bool IsAliveWorld()
@@ -265,20 +242,7 @@ public partial class WorldInstance : IDisposable
 
         _FinalAutoSaveWorldState();
         _isDisposed = true;
-        
-        _jobCts.Cancel();
-        _jobSignal.Release();
 
-        try
-        {
-            _jobWorkerTask?.Wait(TimeSpan.FromSeconds(2));
-        }
-        catch
-        {
-            _loggerService.Warning("Job worker task wait failed");
-        }
-        
-        _jobQueue.Clear();
         _commandHandlers.Clear();
         
         _worldMapInfo?.Dispose();
@@ -286,8 +250,5 @@ public partial class WorldInstance : IDisposable
         _worldOwner = null;
         
         _dbContext?.Dispose();
-        
-        _jobSignal.Dispose();
-        _jobCts.Dispose();
     }
 }

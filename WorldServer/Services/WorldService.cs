@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using NetworkProtocols.Socket.WorldServerProtocols.GameProtocols;
 using WorldServer.Network;
 using WorldInstance = WorldServer.WorldHandler.WorldInstance;
 
@@ -7,6 +8,7 @@ namespace WorldServer.Services;
 public class WorldService : IDisposable
 {
     private WorldServerService _serverService;
+    private WorldShardExecutor _worldShardExecutor;
     private List<WorldInstance>[] _shardWorldLists;
     private object[] _shardLocks;
     private readonly ConcurrentDictionary<string, int> _roomShardMap = new();
@@ -24,13 +26,21 @@ public class WorldService : IDisposable
             _shardWorldLists[i] = new List<WorldInstance>();
             _shardLocks[i] = new object();
         }
-        
-        _SetServerService(serverService);    
+
+        _SetServerService(serverService);
+        _worldShardExecutor = new WorldShardExecutor(_workerCount, _serverService.GetLoggerService());
     }
+
     private void _SetServerService(WorldServerService serverService)
     {
         _serverService = serverService;
     }
+
+    private int _GetShardIndex(string roomId)
+    {
+        return (int)((uint)roomId.GetHashCode() % (uint)_workerCount);
+    }
+
     public async Task<WorldInstance> CreateWorldInstance(string roomId, UserSessionInfo userSessionInfo)
     {
         var newWorldInstance = new WorldInstance(roomId, _serverService.GetLoggerService(), 
@@ -41,24 +51,19 @@ public class WorldService : IDisposable
         if (_worldInstances.TryAdd(roomId, newWorldInstance) == false)
             return null;
 
-        int bestShardIndex = 0;
-        int minCount = int.MaxValue;
-
-        for (int i = 0; i < _workerCount; i++)
-        {
-            int count = _shardWorldLists[i].Count;
-            if (count < minCount)
-            {
-                minCount = count;
-                bestShardIndex = i;
-            }
-        }
+        int bestShardIndex = _GetShardIndex(roomId);
         
         lock (_shardLocks[bestShardIndex])
         {
             _shardWorldLists[bestShardIndex].Add(newWorldInstance);
             _roomShardMap.TryAdd(roomId, bestShardIndex);
         }
+
+        newWorldInstance.BindShardDispatcher(job =>
+        {
+            if (_worldShardExecutor.TryEnqueue(bestShardIndex, () => newWorldInstance.ExecuteJobAsync(job)) == false)
+                _serverService.GetLoggerService().Warning($"World shard enqueue failed: room={roomId}, shard={bestShardIndex}");
+        });
         
         return newWorldInstance;
     }
@@ -73,17 +78,41 @@ public class WorldService : IDisposable
         if (_worldInstances.TryRemove(roomId, out var worldInstance) == false)
             return;
 
-        _roomShardMap.TryRemove(roomId, out var shardIndex);
+        var hasShard = _roomShardMap.TryRemove(roomId, out var shardIndex);
 
-        if (shardIndex >= 0 && shardIndex < _shardWorldLists.Length)
+        if (hasShard && shardIndex >= 0 && shardIndex < _shardWorldLists.Length)
         {
             lock (_shardLocks[shardIndex])
             {
                 _shardWorldLists[shardIndex].Remove(worldInstance);
             }
         }
-        
-        worldInstance.ExitWorld("Disconnect");
+
+        if (hasShard == false)
+        {
+            worldInstance.ExitWorld("Disconnect");
+            return;
+        }
+
+        if (_worldShardExecutor.TryEnqueue(shardIndex, () =>
+            {
+                worldInstance.ExitWorld("Disconnect");
+                return ValueTask.CompletedTask;
+            }) == false)
+        {
+            worldInstance.ExitWorld("Disconnect");
+        }
+    }
+
+    public bool EnqueueGameCommand(WorldInstance worldInstance, GameCommandId commandId, byte[] commandData)
+    {
+        if (worldInstance == null)
+            return false;
+
+        if (_roomShardMap.TryGetValue(worldInstance.GetRoomId(), out var shardIndex) == false)
+            return false;
+
+        return _worldShardExecutor.TryEnqueue(shardIndex, () => worldInstance.HandleGameCommand(commandId, commandData));
     }
 
     public void StartGlobalTicker()
@@ -118,8 +147,15 @@ public class WorldService : IDisposable
                         removeList.Add(worldInstance);
                         continue;
                     }
-                        
-                    worldInstance.Tick();
+
+                    if (_worldShardExecutor.TryEnqueue(shardIndex, () =>
+                        {
+                            worldInstance.Tick();
+                            return ValueTask.CompletedTask;
+                        }) == false)
+                    {
+                        _serverService.GetLoggerService().Warning($"World tick enqueue failed: room={worldInstance.GetRoomId()}, shard={shardIndex}");
+                    }
                 }
 
                 if (removeList.Count > 0)
@@ -150,17 +186,32 @@ public class WorldService : IDisposable
     {
         foreach (var worldInstance in removeList)
         {
+            var roomId = worldInstance.GetRoomId();
             myShardList.Remove(worldInstance);
-            _worldInstances.TryRemove(worldInstance.GetRoomId(), out _);
-            _roomShardMap.TryRemove(worldInstance.GetRoomId(), out _);
-                    
-            worldInstance.Dispose();
+            _worldInstances.TryRemove(roomId, out _);
+            var hasShard = _roomShardMap.TryRemove(roomId, out var shardIndex);
+
+            if (hasShard == false)
+            {
+                worldInstance.ExitWorld("DeadWorld");
+                continue;
+            }
+
+            if (_worldShardExecutor.TryEnqueue(shardIndex, () =>
+                {
+                    worldInstance.ExitWorld("DeadWorld");
+                    return ValueTask.CompletedTask;
+                }) == false)
+            {
+                worldInstance.ExitWorld("DeadWorld");
+            }
         }    
     }
 
     public void Dispose()
     {
         _cts?.Cancel();
+        _worldShardExecutor?.Dispose();
         _cts?.Dispose();
     }
 }

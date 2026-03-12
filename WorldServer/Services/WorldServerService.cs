@@ -73,9 +73,9 @@ public class WorldServerService : SuperSocketService<NetworkPackage>
             TimeZoneHelper.Initialize(serviceTimeZone);
         
             var minWorker = _configurationHelper.GetValue("MinWorkerThreads", 120);
-            var minIOThread = _configurationHelper.GetValue("MinIOThreads", 120);
+            var minIoThread = _configurationHelper.GetValue("MinIOThreads", 120);
         
-            ThreadPool.SetMinThreads(Math.Max(minWorker, Environment.ProcessorCount * 2), minIOThread);
+            ThreadPool.SetMinThreads(Math.Max(minWorker, Environment.ProcessorCount * 2), minIoThread);
         
             MonsterUpdateJobPool.Initialize(300, _loggerService);
             _worldService.Initialize(this);
